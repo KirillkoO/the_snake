@@ -134,6 +134,7 @@ class Form(Widget):
 		self.fitness_source = [0 for i in range(self.population)] #var for save fitness score every snake in source population
 		self.fitness_offspring = [0 for i in range(self.population)] #var for save fitness score every snake in offspring population
 		self.count_try = 3 #number of attemps to play the game of the population
+		self.current_try = 1 #current try
 		self.queue_population = False #queue population (if false - queue of source population, true - offspring)
 		#-----------------------------------------------------------------
 		self.text1 = Label(pos=(self.sourceX + 70, self.sourceY - 100), text='Count start:') 
@@ -184,12 +185,24 @@ class Form(Widget):
 			return True
 		return False
 #-------------------------------------------------------------------------
+# snakes play in turn
+	def queue_game(self):
+		self.current_try +=1 #plus one try
+		if (self.current_try == self.count_try and not self.queue_population): #as all snakes in population has played in game self.count_try times
+			self.current_try = 1 #reset current try to 1 for offspring population
+			self.queue_population = True #source population finished its tries
+		elif (self.current_try == self.count_try and self.queue_population): #queue of source population
+			self.current_try = 1
+			self.queue_population = False
+#-------------------------------------------------------------------------
 # learning neural network
 	def learning(self):
-		if (self.compare_population(self.fitness_source, self.fitness_offspring)):
-			self.text5.text = 'true'
-		else:
-			self.text5.text = 'false'
+		self.current_try += 1 #plus one try
+		
+			if (self.compare_population(self.fitness_source, self.fitness_offspring)): #compare source and offspring populations
+				self.text5.text = 'true'
+			else:
+				self.text5.text = 'false'
 #-------------------------------------------------------------------------
 	def update(self, _):
 		inputs = self.vision.inputs(self.worm.get_snake()[0].get_pos(), self.fruit.get_pos(), self.worm.get_snake()) #get input layer from vision
@@ -221,6 +234,7 @@ class Form(Widget):
 			self.add_widget(self.fruit) #add widget
 		elif (self.count_start == self.population - 1):
 			self.count_start = -1 #reset count
+			self.queue_game() #define whose of queue
 			self.learning() #when all snakes has tried gather fruit
 		self.text2.text = str(self.count_start) #display count start
 		Clock.schedule_interval(self.update, 0.001) #start the clock
@@ -228,7 +242,10 @@ class Form(Widget):
 # stop game, reset all play objects
 	def stop(self):
 		self.text5.text = str(self.count_fruit)
-		self.fitness_source[self.count_start] += self.count_fruit
+		if (self.queue_population):
+			self.fitness_offspring[self.count_start] += self.count_fruit #if offspring population has queue to play, count number of the fruit to fitness_offspring
+		else:
+			self.fitness_source[self.count_start] += self.count_fruit #correspondly with source population
 		self.remove_widget(self.worm) #remove snake
 		self.remove_widget(self.fruit) #remove fruit
 		Clock.unschedule(self.update) #stop the clock
