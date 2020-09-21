@@ -106,10 +106,11 @@ class FeedForward():
 			snakes = pickle.load(f)
 			return snakes
 		else:
-			x = [[random.uniform(-1, 1) for i in range(696)] for j in range(self.quantity)]
+			x = [[round(random.uniform(-1, 1), 2) for i in range(696)] for j in range(self.quantity)]
 			f = open(file, 'wb')
 			pickle.dump(x, f)
 			f.close()
+			return x
 #-------------------------------------------------------------------------
 # save snakes in the file
 	def save_snakes(self, snakes):
