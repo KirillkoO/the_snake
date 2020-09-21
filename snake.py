@@ -7,6 +7,7 @@ from kivy.core.window import Window
 import random
 import vision
 import neural
+import genetic
 
 #-------------------------------------------------------------------------
 #-------------------------------------------------------------------------
@@ -127,15 +128,18 @@ class Form(Widget):
 		self.dir = (1, 0) #start direction
 		self.ff = neural.FeedForward(self.population) #instance for neural network
 		self.snakes = self.ff.load_snakes() #load all snakes from file
+		self.snakes_offspring = None #instance for offspring snakes
+		self.mutation_rank = 0.05 #rank of mutation
 		self.cur_snake = None #instance for current playing snake
 		self.matrices = None #instance of matrix for current snake
 		self.count_moves = 0 #count of the snake moves
 		self.count_fruit = 0 #count of fruit that was eatten by snake
 		self.fitness_source = [0 for i in range(self.population)] #var for save fitness score every snake in source population
 		self.fitness_offspring = [0 for i in range(self.population)] #var for save fitness score every snake in offspring population
-		self.count_try = 3 #number of attemps to play the game of the population
+		self.count_try = 2 #number of attemps to play the game of the population
 		self.current_try = 1 #current try
 		self.queue_population = False #queue population (if false - queue of source population, true - offspring)
+		self.generation = 0 #count generation
 		#-----------------------------------------------------------------
 		self.text1 = Label(pos=(self.sourceX + 70, self.sourceY - 100), text='Count start:') 
 		self.text2 = Label(pos=(self.sourceX + 240, self.sourceY - 100), text='0')
@@ -148,6 +152,8 @@ class Form(Widget):
 		
 		self.text5 = Label(pos=(self.sourceX + 70, self.sourceY - 250), text='0')
 		self.add_widget(self.text5)
+		self.text6 = Label(pos=(self.sourceX + 70, self.sourceY - 175), text='0')
+		self.add_widget(self.text6)
 #-------------------------------------------------------------------------
 # calculate and return empty position to place the fruit
 	def get_empty_pos(self, width_x, height_y):
@@ -181,6 +187,7 @@ class Form(Widget):
 		for i in range(len(source)):
 			source_sum += source[i]**2 #than bigger number fruit the snake has eaten, than bigger score it getting
 			offspring_sum += offspring[i]**2
+			self.text6.text =str([source_sum, offspring_sum])
 		if (offspring_sum >= source_sum): #if offspring population has got more score than source return true
 			return True
 		return False
@@ -191,18 +198,25 @@ class Form(Widget):
 		if (self.current_try == self.count_try and not self.queue_population): #as all snakes in population has played in game self.count_try times
 			self.current_try = 1 #reset current try to 1 for offspring population
 			self.queue_population = True #source population finished its tries
+			self.learning_offspring()
 		elif (self.current_try == self.count_try and self.queue_population): #queue of source population
 			self.current_try = 1
 			self.queue_population = False
+			if (self.compare_population(self.fitness_source, self.fitness_offspring)): #compare source and offspring populations
+				self.snakes = self.snakes_offspring #set to self.snakes its offspring
+				self.ff.save_snakes(self.snakes) #and save in the file
+				self.fitness_source = [0 for i in range(len(self.snakes))] #reset fitness score
+				self.fitness_offspring = [0 for i in range(len(self.snakes))] #offspring fitness score too
+				self.generation += 1 #one generation has passed
+				self.text4.text = str(self.generation) #display current generation
+			else:
+				self.learning_offspring() #learning offspring again
+				self.queue_population = True
+				self.fitness_offspring = [0 for i in range(len(self.snakes))]
 #-------------------------------------------------------------------------
 # learning neural network
-	def learning(self):
-		self.current_try += 1 #plus one try
-		
-			if (self.compare_population(self.fitness_source, self.fitness_offspring)): #compare source and offspring populations
-				self.text5.text = 'true'
-			else:
-				self.text5.text = 'false'
+	def learning_offspring(self):
+		self.snakes_offspring = genetic.Genetic.gen(self.snakes, self.fitness_source, self.mutation_rank)
 #-------------------------------------------------------------------------
 	def update(self, _):
 		inputs = self.vision.inputs(self.worm.get_snake()[0].get_pos(), self.fruit.get_pos(), self.worm.get_snake()) #get input layer from vision
@@ -225,17 +239,22 @@ class Form(Widget):
 		self.count_fruit = 0 #reset count fruit
 		self.count_start += 1 #each start plus one, for load neccesery snake
 		if (self.count_start < self.population - 1):
-			self.cur_snake = self.snakes[self.count_start] #number of snake that playing in game
-			self.matrices = self.ff.vector_to_matrices(self.cur_snake) #transform vector to weight matrices
+			if (not self.queue_population):
+				self.cur_snake = self.snakes[self.count_start] #number of snake that playing in game
+				self.matrices = self.ff.vector_to_matrices(self.cur_snake) #transform vector to weight matrices
+			elif (self.queue_population):
+				self.cur_snake = self.snakes_offspring[self.count_start]
+				self.matrices = self.ff.vector_to_matrices(self.cur_snake)
 			self.worm = Worm(self.sourceX, self.sourceY, self.width_x, self.height_y) #create the snake 
 			self.add_widget(self.worm) # add widget on the form
+			random.seed(25)
 			(x, y) = self.get_empty_pos(self.width_x, self.height_y) #get emtpy position to place the fruit
 			self.fruit = Cell(x, y) #create the fruit
 			self.add_widget(self.fruit) #add widget
 		elif (self.count_start == self.population - 1):
 			self.count_start = -1 #reset count
 			self.queue_game() #define whose of queue
-			self.learning() #when all snakes has tried gather fruit
+			#self.learning() #when all snakes has tried gather fruit
 		self.text2.text = str(self.count_start) #display count start
 		Clock.schedule_interval(self.update, 0.001) #start the clock
 #-------------------------------------------------------------------------
