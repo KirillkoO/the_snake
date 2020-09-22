@@ -23,7 +23,7 @@ class Vision():
 				k += 1
 				x_cur += dir[0]*20
 				y_cur += dir[1]*20
-			dist = round(k/(self.coef), 2) #divide on coef 
+			dist = round(k/(self.coef), 1) #divide on coef 
 			list_of_dist.append(dist)
 		return list_of_dist
 #-------------------------------------------------------------------------
@@ -54,7 +54,7 @@ class Vision():
 				for j in range(1, len(snake)):
 					(x_cell, y_cell) = snake[j].get_pos() #get x and y of every cell
 					if (cur_y == y_cell and cur_x == x_cell):
-						vision_tail[i] = round((self.height_y * self.width_x - count)/(self.height_y * self.width_x), 2) #dist to the tail's cell
+						vision_tail[i] = round((self.height_y * self.width_x - count)/(self.height_y * self.width_x), 1) #dist to the tail's cell
 						break
 				count += 1 #add one as next step
 				cur_x += dir[0] #next cur pos

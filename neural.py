@@ -25,13 +25,15 @@ class FeedForward():
 			sum = 0
 			for j in range(24):
 				sum += inputs[j] * w_1[i][j]
-			y = self.relu(sum)
+			y = math.tanh(sum)
+			#y = self.relu(sum)
 			second_layer.append(y)
 		for i in range(12): #calculate the third layer output
 			sum = 0
 			for j in range(18):
 				sum += second_layer[j] * w_2[i][j]
-			y = self.relu(sum)
+			y = math.tanh(sum)
+			#y = self.relu(sum)
 			third_layer.append(y)
 		for i in range(4): #calculate the output layer
 			sum = 0
@@ -106,7 +108,7 @@ class FeedForward():
 			snakes = pickle.load(f)
 			return snakes
 		else:
-			x = [[round(random.uniform(-1, 1), 2) for i in range(696)] for j in range(self.quantity)]
+			x = [[round(random.uniform(-1, 1), 1) for i in range(696)] for j in range(self.quantity)]
 			f = open(file, 'wb')
 			pickle.dump(x, f)
 			f.close()

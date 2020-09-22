@@ -122,14 +122,14 @@ class Form(Widget):
 		self.worm = None #instance of the snake
 		self.fruit = None #instance of the fruit
 		self.count_start = -1 #count of game start
-		self.population = 500 #number of snakes in population
+		self.population = 250 #number of snakes in population
 		self.vision_dir = [(-1, 0), (-1, 1), (0, 1), (1, 1), (1, 0), (1, -1), (0, -1), (-1, -1)] #set of the vision directions
 		self.vision = vision.Vision(self.vision_dir, self.sourceX, self.sourceY, self.width_x, self.height_y) #instance for vision
 		self.dir = (1, 0) #start direction
 		self.ff = neural.FeedForward(self.population) #instance for neural network
 		self.snakes = self.ff.load_snakes() #load all snakes from file
 		self.snakes_offspring = None #instance for offspring snakes
-		self.mutation_rank = 0.05 #rank of mutation
+		self.mutation_rank = 0.1 #rank of mutation
 		self.cur_snake = None #instance for current playing snake
 		self.matrices = None #instance of matrix for current snake
 		self.count_moves = 0 #count of the snake moves
@@ -140,6 +140,7 @@ class Form(Widget):
 		self.current_try = 1 #current try
 		self.queue_population = False #queue population (if false - queue of source population, true - offspring)
 		self.generation = 0 #count generation
+		self.sum_fruit = 0 
 		#-----------------------------------------------------------------
 		self.text1 = Label(pos=(self.sourceX + 70, self.sourceY - 100), text='Count start:') 
 		self.text2 = Label(pos=(self.sourceX + 240, self.sourceY - 100), text='0')
@@ -182,13 +183,14 @@ class Form(Widget):
 # compare two population
 # length of source population and their offspring is equal
 	def compare_population(self, source, offspring):
-		source_sum = 0
-		offspring_sum = 0
-		for i in range(len(source)):
-			source_sum += source[i]**2 #than bigger number fruit the snake has eaten, than bigger score it getting
-			offspring_sum += offspring[i]**2
-			self.text6.text =str([source_sum, offspring_sum])
-		if (offspring_sum >= source_sum): #if offspring population has got more score than source return true
+		source_sum = max(source)
+		offspring_sum = max(offspring)
+		#for i in range(len(source)):
+			#source_sum += source[i]**2 #than bigger number fruit the snake has eaten, than bigger score it getting
+			#offspring_sum += offspring[i]**2
+		self.text6.text =str([source_sum, offspring_sum])
+		#if (offspring_sum >= source_sum): #if offspring population has got more score than source return true
+		if (source_sum <= offspring_sum):
 			return True
 		return False
 #-------------------------------------------------------------------------
@@ -205,7 +207,9 @@ class Form(Widget):
 			if (self.compare_population(self.fitness_source, self.fitness_offspring)): #compare source and offspring populations
 				self.snakes = self.snakes_offspring #set to self.snakes its offspring
 				self.ff.save_snakes(self.snakes) #and save in the file
-				self.fitness_source = [0 for i in range(len(self.snakes))] #reset fitness score
+				self.learning_offspring()
+				self.queue_population = True
+				self.fitness_source = self.fitness_offspring #reset fitness score
 				self.fitness_offspring = [0 for i in range(len(self.snakes))] #offspring fitness score too
 				self.generation += 1 #one generation has passed
 				self.text4.text = str(self.generation) #display current generation
@@ -226,6 +230,8 @@ class Form(Widget):
 			self.count_moves += 1 #add one to move count 
 			if (self.worm.get_eated_state()): #if the snake ate the fruit
 				self.count_fruit += 1 #add one to fruit count
+				if (self.count_fruit == self.width_x * self.height_y - 3):
+					self.full_stop()
 				(x, y) = self.get_empty_pos(self.width_x, self.height_y) #get new empty position to place fruit
 				self.fruit.set_pos(x, y) #set new position of the fruit
 			if (self.count_moves/(self.count_fruit + 1) > 100): #if the snake begin moving round 
@@ -247,11 +253,12 @@ class Form(Widget):
 				self.matrices = self.ff.vector_to_matrices(self.cur_snake)
 			self.worm = Worm(self.sourceX, self.sourceY, self.width_x, self.height_y) #create the snake 
 			self.add_widget(self.worm) # add widget on the form
-			random.seed(25)
+			random.seed(22)
 			(x, y) = self.get_empty_pos(self.width_x, self.height_y) #get emtpy position to place the fruit
 			self.fruit = Cell(x, y) #create the fruit
 			self.add_widget(self.fruit) #add widget
 		elif (self.count_start == self.population - 1):
+			self.sum_fruit = 0 #reset 
 			self.count_start = -1 #reset count
 			self.queue_game() #define whose of queue
 			#self.learning() #when all snakes has tried gather fruit
@@ -260,7 +267,8 @@ class Form(Widget):
 #-------------------------------------------------------------------------
 # stop game, reset all play objects
 	def stop(self):
-		self.text5.text = str(self.count_fruit)
+		self.sum_fruit += self.count_fruit ** 2
+		self.text5.text = str(self.sum_fruit)
 		if (self.queue_population):
 			self.fitness_offspring[self.count_start] += self.count_fruit #if offspring population has queue to play, count number of the fruit to fitness_offspring
 		else:
@@ -270,10 +278,14 @@ class Form(Widget):
 		Clock.unschedule(self.update) #stop the clock
 		self.start() #start again
 #-------------------------------------------------------------------------
+	def full_stop(self):
+		Clock.unschedule(self.update)
+		
+#-------------------------------------------------------------------------
 #-------------------------------------------------------------------------
 class SnakeApp(App):
 	def build(self):
-		self.form = Form(10, 10)
+		self.form = Form(4, 4)
 		self.form.start()
 		return self.form
 
