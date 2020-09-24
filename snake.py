@@ -127,7 +127,9 @@ class Form(Widget):
 		self.vision = vision.Vision(self.vision_dir, self.sourceX, self.sourceY, self.width_x, self.height_y) #instance for vision
 		self.dir = (1, 0) #start direction
 		self.ff = neural.FeedForward(self.population) #instance for neural network
-		self.snakes = self.ff.load_snakes() #load all snakes from file
+		t = self.ff.load_snakes() #load all snakes from file
+		self.snakes = t[0]
+		self.random_seed = t[1]
 		self.snakes_offspring = None #instance for offspring snakes
 		self.mutation_rank = 0.1 #rank of mutation
 		self.cur_snake = None #instance for current playing snake
@@ -206,7 +208,7 @@ class Form(Widget):
 			self.queue_population = False
 			if (self.compare_population(self.fitness_source, self.fitness_offspring)): #compare source and offspring populations
 				self.snakes = self.snakes_offspring #set to self.snakes its offspring
-				self.ff.save_snakes(self.snakes) #and save in the file
+				self.ff.save_snakes((self.snakes, self.random_seed)) #and save in the file
 				self.learning_offspring()
 				self.queue_population = True
 				self.fitness_source = self.fitness_offspring #reset fitness score
@@ -253,11 +255,12 @@ class Form(Widget):
 				self.matrices = self.ff.vector_to_matrices(self.cur_snake)
 			self.worm = Worm(self.sourceX, self.sourceY, self.width_x, self.height_y) #create the snake 
 			self.add_widget(self.worm) # add widget on the form
-			random.seed(22)
+			random.seed(self.random_seed)
 			(x, y) = self.get_empty_pos(self.width_x, self.height_y) #get emtpy position to place the fruit
 			self.fruit = Cell(x, y) #create the fruit
 			self.add_widget(self.fruit) #add widget
 		elif (self.count_start == self.population - 1):
+			self.random_seed = random.choice(range(-1000000, 1000000))
 			self.sum_fruit = 0 #reset 
 			self.count_start = -1 #reset count
 			self.queue_game() #define whose of queue
@@ -280,7 +283,7 @@ class Form(Widget):
 #-------------------------------------------------------------------------
 	def full_stop(self):
 		Clock.unschedule(self.update)
-		
+		self.ff.save_snakes((self.snakes_offspring, self.random_seed))
 #-------------------------------------------------------------------------
 #-------------------------------------------------------------------------
 class SnakeApp(App):
