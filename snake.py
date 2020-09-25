@@ -157,6 +157,8 @@ class Form(Widget):
 		self.add_widget(self.text5)
 		self.text6 = Label(pos=(self.sourceX + 70, self.sourceY - 175), text='0')
 		self.add_widget(self.text6)
+		self.text7 = Label(pos=(self.sourceX + 240, self.sourceY - 250), text='0')
+		self.add_widget(self.text7)
 #-------------------------------------------------------------------------
 # calculate and return empty position to place the fruit
 	def get_empty_pos(self, width_x, height_y):
@@ -246,6 +248,7 @@ class Form(Widget):
 		self.count_moves = 0 #reset count moves
 		self.count_fruit = 0 #reset count fruit
 		self.count_start += 1 #each start plus one, for load neccesery snake
+		self.text7.text = str(self.random_seed)
 		if (self.count_start < self.population - 1):
 			if (not self.queue_population):
 				self.cur_snake = self.snakes[self.count_start] #number of snake that playing in game
@@ -260,10 +263,10 @@ class Form(Widget):
 			self.fruit = Cell(x, y) #create the fruit
 			self.add_widget(self.fruit) #add widget
 		elif (self.count_start == self.population - 1):
-			self.random_seed = random.choice(range(-1000000, 1000000))
 			self.sum_fruit = 0 #reset 
 			self.count_start = -1 #reset count
 			self.queue_game() #define whose of queue
+			self.random_seed = random.choice(range(-1000000, 1000000))
 			#self.learning() #when all snakes has tried gather fruit
 		self.text2.text = str(self.count_start) #display count start
 		Clock.schedule_interval(self.update, 0.001) #start the clock
