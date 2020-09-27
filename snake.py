@@ -171,7 +171,7 @@ class Form(Widget):
 		for i in range(self.width_x):
 			for j in range(self.height_y):
 				for k in range(len(snake_pos)):
-					if (self.sourceY + i*20 == snake_pos[k][0] and self.sourceX + j*20 == snake_pos[k][1]): #fill matrix 
+					if (self.sourceX + i*20 == snake_pos[k][0] and self.sourceY + j*20 == snake_pos[k][1]): #fill matrix 
 						matrix[i][j] = 1
 		for i in range(self.width_x):
 			for j in range(self.height_y):
