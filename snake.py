@@ -25,6 +25,20 @@ class Cell(Widget):
 		self.pos = (x, y)
 #-------------------------------------------------------------------------
 #-------------------------------------------------------------------------
+# cell of snakes
+class Fruit(Widget):
+	def __init__(self, x, y):
+		super().__init__()
+		self.pos = (x, y)
+		self.size = (20, 20)
+#-------------------------------------------------------------------------
+	def get_pos(self):
+		return self.pos
+#-------------------------------------------------------------------------
+	def set_pos(self, x, y):
+		self.pos = (x, y)
+#-------------------------------------------------------------------------
+#-------------------------------------------------------------------------
 # worm, basic object for game
 # directions of the snake moving: (1, 0) - right, (-1, 0) - left, (0, 1) - up, (0, -1) - down
 class Worm(Widget):
@@ -37,6 +51,7 @@ class Worm(Widget):
 		self.snake = [] #list of cells of the snake
 		self.init_snake(sourceX, sourceY, width_x, height_y) #init starting snake
 		self.eated_state = None
+		#-----------------------------------------
 #-------------------------------------------------------------------------
 # build the start snake
 	def init_snake(self, sourceX, sourceY, width_x, height_y):
@@ -71,12 +86,11 @@ class Worm(Widget):
 # check if the snake has bitten itself
 	def is_bite(self, dir):
 		(x_new, y_new) = self.new_pos(dir) #calc new position
-		(x_head, y_head) = self.snake[0].get_pos() #get x and y of the snake
-		for i in range(2, len(self.snake)):
+		for i in range(1, len(self.snake)):
 			(x_cell, y_cell) = self.snake[i].get_pos() #get x and y every cell beginning from 2 index of the snake
-			if (x_head == x_cell and y_head == y_cell): #if coordinates match that means the snake has bitten itself
+			if (x_new == x_cell and y_new == y_cell): #if coordinates match that means the snake has bitten itself
 				return True
-			return False
+		return False
 #-------------------------------------------------------------------------
 # union two methods (is_leave and is_bite) to one 
 	def is_alive(self, dir):
@@ -260,7 +274,7 @@ class Form(Widget):
 			self.add_widget(self.worm) # add widget on the form
 			random.seed(self.random_seed)
 			(x, y) = self.get_empty_pos(self.width_x, self.height_y) #get emtpy position to place the fruit
-			self.fruit = Cell(x, y) #create the fruit
+			self.fruit = Fruit(x, y) #create the fruit
 			self.add_widget(self.fruit) #add widget
 		elif (self.count_start == self.population - 1):
 			self.sum_fruit = 0 #reset 
