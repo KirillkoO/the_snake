@@ -10,3 +10,16 @@
 		Line:
 			width: 2
 			rectangle: (self.x, self.y, root.size[0], root.size[1])
+			
+<Fruit>:
+	canvas.after:
+		Color:
+			rgb: 0., 0.7, 0.56
+		Rectangle:
+			pos: self.pos
+			size: self.size
+		Color: 
+			rgb: 0., 0., 0.
+		Line:
+			width: 1
+			rectangle: (self.x, self.y, root.size[0], root.size[1])
